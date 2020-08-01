@@ -58,31 +58,49 @@ class ViewController: UIViewController {
     }
     
     private func start() {
-        let queue1 = DispatchQueue.global()
-        let queue2 = DispatchQueue.global()
-        let queue3 = DispatchQueue.global()
+        let group = DispatchGroup()
+        let queue1 = DispatchQueue(label: "com.queue1", attributes: .concurrent)
+        let queue2 = DispatchQueue(label: "com.queue2", attributes: .concurrent)
+        let queue3 = DispatchQueue(label: "com.queue3", attributes: .concurrent)
         let mainQueue = DispatchQueue.main
         let startTime = Date()
+        
+        group.enter()
         queue1.async {
-            guard let result = self.bruteForce(startString: "1111", endString: "0000") else { return }
+            guard let result = self.bruteForce(startString: "0000", endString: "9999") else {
+                group.leave()
+                return
+            }
             mainQueue.async {
                 self.stop(password: result, startTime: startTime)
             }
         }
+        
+        group.enter()
         queue2.async {
-            guard let result = self.bruteForce(startString: "aaaa", endString: "zzzz") else { return }
+            guard let result = self.bruteForce(startString: "aaaa", endString: "zzzz") else {
+                group.leave()
+                return
+            }
             mainQueue.async {
                 self.stop(password: result, startTime: startTime)
             }
         }
+        
+        group.enter()
         queue3.async {
-            guard let result = self.bruteForce(startString: "AAAA", endString: "ZZZZ") else { return }
+            guard let result = self.bruteForce(startString: "AAAA", endString: "ZZZZ") else {
+                group.leave()
+                return
+            }
             mainQueue.async {
                 self.stop(password: result, startTime: startTime)
             }
         }
-//        let result = bruteForce(startString: "0000", endString: "ZZZZ")
-//        stop(password: result ?? "Error", startTime: startTime)
+        
+        group.notify(queue: .main) {
+            self.stop(password: "Error", startTime: startTime)
+        }
     }
     
     // Возвращает подобранный пароль
@@ -104,14 +122,11 @@ class ViewController: UIViewController {
         }
         
         var currentIndexArray = startIndexArray
-//        print(currentIndexArray)
         
         // Цикл подбора пароля
         while true {
             // Формируем строку проверки пароля из элементов массива символов
             let currentPass = self.characterArray[currentIndexArray[0]] + self.characterArray[currentIndexArray[1]] + self.characterArray[currentIndexArray[2]] + self.characterArray[currentIndexArray[3]]
-            
-//            print(currentPass)
             
             // Выходим из цикла если пароль найден, или, если дошли до конца массива индексов
             if inputPassword == currentPass {
