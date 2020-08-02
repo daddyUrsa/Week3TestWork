@@ -7,6 +7,10 @@
 
 import UIKit
 
+struct EmptyArraysCount {
+    var count: Int = 0
+}
+
 class ViewController: UIViewController {
     @IBOutlet private weak var inputTextField: UITextField!
     @IBOutlet private weak var statusLabel: UILabel!
@@ -63,12 +67,15 @@ class ViewController: UIViewController {
         let queue2 = DispatchQueue(label: "com.queue2", attributes: .concurrent)
         let queue3 = DispatchQueue(label: "com.queue3", attributes: .concurrent)
         let mainQueue = DispatchQueue.main
+        let semaphore = DispatchSemaphore(value: 1)
         let startTime = Date()
+        var arrayCount = EmptyArraysCount()
         
-        group.enter()
-        queue1.async {
+        queue1.async(group: group) {
             guard let result = self.bruteForce(startString: "0000", endString: "9999") else {
-                group.leave()
+                semaphore.wait()
+                arrayCount.count += 1
+                semaphore.signal()
                 return
             }
             mainQueue.async {
@@ -79,7 +86,9 @@ class ViewController: UIViewController {
         group.enter()
         queue2.async {
             guard let result = self.bruteForce(startString: "aaaa", endString: "zzzz") else {
-                group.leave()
+                semaphore.wait()
+                arrayCount.count += 1
+                semaphore.signal()
                 return
             }
             mainQueue.async {
@@ -90,7 +99,9 @@ class ViewController: UIViewController {
         group.enter()
         queue3.async {
             guard let result = self.bruteForce(startString: "AAAA", endString: "ZZZZ") else {
-                group.leave()
+                semaphore.wait()
+                arrayCount.count += 1
+                semaphore.signal()
                 return
             }
             mainQueue.async {
@@ -98,8 +109,10 @@ class ViewController: UIViewController {
             }
         }
         
-        group.notify(queue: .main) {
-            self.stop(password: "Error", startTime: startTime)
+        group.notify(queue: mainQueue) {
+            if arrayCount.count == 3 {
+                self.stop(password: "Error", startTime: startTime)
+            }
         }
     }
     
