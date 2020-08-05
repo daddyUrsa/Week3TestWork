@@ -83,8 +83,7 @@ class ViewController: UIViewController {
             }
         }
         
-        group.enter()
-        queue2.async {
+        queue2.async(group: group) {
             guard let result = self.bruteForce(startString: "aaaa", endString: "zzzz") else {
                 semaphore.wait()
                 arrayCount.count += 1
@@ -96,8 +95,7 @@ class ViewController: UIViewController {
             }
         }
         
-        group.enter()
-        queue3.async {
+        queue3.async(group: group) {
             guard let result = self.bruteForce(startString: "AAAA", endString: "ZZZZ") else {
                 semaphore.wait()
                 arrayCount.count += 1
